@@ -23,13 +23,11 @@ data Optional a =
 --
 -- >>> fullOr 99 Empty
 -- 99
-fullOr ::
-  a
-  -> Optional a
-  -> a
-fullOr =
-  error "todo: Course.Optional#fullOr"
-
+fullOr :: a -> Optional a -> a
+fullOr defA optA =
+  case optA of
+    Full a -> a
+    Empty -> defA
 -- | Map the given function on the possible value.
 --
 -- >>> mapOptional (+1) Empty

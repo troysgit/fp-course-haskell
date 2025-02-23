@@ -5,7 +5,7 @@ module Course.Validation where
 
 import qualified Prelude as P(String)
 import Course.Core
-
+ -- triple arrows usually something around doctests
 -- $setup
 -- >>> import Test.QuickCheck
 -- >>> import qualified Prelude as P(fmap, either)
@@ -24,10 +24,18 @@ type Err = P.String
 -- False
 --
 -- prop> \x -> isError x /= isValue x
+-- the following is basically syntax sugar
 isError :: Validation a -> Bool
 isError (Error _) = True
 isError (Value _) = False
 
+
+-- Different syntax
+isErrorAlt :: Validation a -> Bool 
+isErrorAlt v = case v of
+  Error _ -> True
+  Value _ -> False
+   
 -- | Returns whether or not the given validation is a value.
 --
 -- >>> isValue (Error "message")
@@ -37,8 +45,19 @@ isError (Value _) = False
 -- True
 --
 -- prop> \x -> isValue x /= isError x
+-- a Value of type Validation a 
+-- isValue is the composition of not and isError
 isValue :: Validation a -> Bool
 isValue = not . isError
+
+-- pointful version of the above
+isValue' :: Validation a -> Bool
+isValue' v = not (isError v)
+
+-- lambda. Definition of composition but expanded. 
+isValueAlt :: Validation a -> Bool 
+isValueAlt = (\v -> not (isError v))
+
 
 -- | Maps a function on a validation's value side.
 --
@@ -68,6 +87,7 @@ mapValidation f (Value a) = Value (f a)
 bindValidation :: (a -> Validation b) -> Validation a -> Validation b
 bindValidation _ (Error s) = Error s
 bindValidation f (Value a) = f a
+--bindValidation f (Value a) = Error "Oh No"
 
 -- | Returns a validation's value side or the given default if it is an error.
 --
@@ -79,8 +99,8 @@ bindValidation f (Value a) = f a
 --
 -- prop> \x -> isValue x || valueOr x n == n
 valueOr :: Validation a -> a -> a
-valueOr (Error _) a = a
-valueOr (Value a) _ = a
+valueOr (Error _) def = def
+valueOr (Value x) _ = x
 
 -- | Returns a validation's error side or the given default if it is a value.
 --
@@ -90,6 +110,7 @@ valueOr (Value a) _ = a
 -- >>> errorOr (Value 7) "q"
 -- "q"
 --
+-- quickcheck tests: prop == proposition
 -- prop> \x -> isError x || errorOr x e == e
 errorOr :: Validation a -> Err -> Err
 errorOr (Error e) _ = e
