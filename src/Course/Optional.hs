@@ -11,11 +11,12 @@ import qualified Prelude as P
 -- | The `Optional` data type contains 0 or 1 value.
 --
 -- It might be thought of as a list, with a maximum length of one.
-data Optional a =
-  Full a
+data Optional a = 
+    Full a 
   | Empty
   deriving (Eq, Show)
 
+-- data Optional' a
 -- | Return the possible value if it exists; otherwise, the first argument.
 --
 -- >>> fullOr 99 (Full 8)
@@ -28,6 +29,11 @@ fullOr defA optA =
   case optA of
     Full a -> a
     Empty -> defA
+
+fullOr' :: a -> Optional a -> a
+fullOr' defA Empty = defA
+fullOr' _ (Full optA) = optA
+
 -- | Map the given function on the possible value.
 --
 -- >>> mapOptional (+1) Empty
@@ -35,12 +41,26 @@ fullOr defA optA =
 --
 -- >>> mapOptional (+1) (Full 8)
 -- Full 9
-mapOptional ::
-  (a -> b)
-  -> Optional a
-  -> Optional b
-mapOptional =
-  error "todo: Course.Optional#mapOptional"
+mapOptional :: (a -> b) -> Optional a -> Optional b
+mapOptional f potentA = 
+  case potentA of 
+    Full x -> Full (f x) 
+    Empty -> Empty 
+
+mapOptional' :: (a -> b) -> Optional a -> Optional b
+mapOptional' f (Full potentA) = Full (f potentA)
+mapOptional' _ Empty = Empty
+  -- | Full potentA = f (Full potentA)
+  -- | Empty = Empty
+  -- case potentA of 
+  --   Full x -> f x
+  --   Empty -> _ 
+
+
+-- mapOptional' :: (a -> b) -> Optional a -> Optional b
+-- mapOptional' f potentA
+--   | if Full potentA then f potentA else potentA = Empty
+--   | otherwise = Empty
 
 -- | Bind the given function on the possible value.
 --
@@ -52,12 +72,19 @@ mapOptional =
 --
 -- >>> bindOptional (\n -> if even n then Full (n - 1) else Full (n + 1)) (Full 9)
 -- Full 10
-bindOptional ::
-  (a -> Optional b)
-  -> Optional a
-  -> Optional b
-bindOptional =
-  error "todo: Course.Optional#bindOptional"
+bindOptional :: (a -> Optional b) -> Optional a -> Optional b
+bindOptional f Empty = Empty 
+bindOptional f (Full a) = f a
+
+bindOptional' :: (a -> Optional b) -> Optional a -> Optional b
+bindOptional' f (Full potentA) = f potentA
+bindOptional' _ Empty = Empty
+
+-- bindPartial :: (a -> Optional b) -> Optional a
+-- bindPartial f a = (Full a)
+
+myAdd :: (Num a) => a -> a -> a 
+myAdd inp inp2 = inp + inp2
 
 -- | Try the first optional for a value. If it has a value, use it; otherwise,
 -- use the second value.
@@ -73,12 +100,19 @@ bindOptional =
 --
 -- >>> Empty <+> Empty
 -- Empty
-(<+>) ::
-  Optional a
-  -> Optional a
-  -> Optional a
-(<+>) =
-  error "todo: Course.Optional#(<+>)"
+(<+>) :: Optional a -> Optional a -> Optional a
+(<+>) a b =
+  case a of 
+    Full _ -> a
+    _ -> b
+
+arrowPlusArrow :: Optional a -> Optional a -> Optional a
+arrowPlusArrow (Full a) _ = Full a
+arrowPlusArrow _ b = b
+
+
+-- (<+>) (Full a) _ = a
+-- (<+>) _  (Full b) = b
 
 -- | Replaces the Full and Empty constructors in an optional.
 --
