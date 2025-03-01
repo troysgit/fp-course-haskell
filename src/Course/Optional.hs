@@ -41,15 +41,16 @@ fullOr' _ (Full optA) = optA
 --
 -- >>> mapOptional (+1) (Full 8)
 -- Full 9
-mapOptional :: (a -> b) -> Optional a -> Optional b
-mapOptional f potentA = 
-  case potentA of 
-    Full x -> Full (f x) 
-    Empty -> Empty 
+-- mapOptional :: (a -> b) -> Optional a -> Optional b
+-- mapOptional f potentA = 
+--   case potentA of 
+--     Full x -> Full (f x) 
+--     Empty -> Empty 
 
-mapOptional' :: (a -> b) -> Optional a -> Optional b
-mapOptional' f (Full potentA) = Full (f potentA)
-mapOptional' _ Empty = Empty
+mapOptional :: (a -> b) -> Optional a -> Optional b
+mapOptional f (Full potentA) = Full (f potentA)
+mapOptional _ Empty = Empty
+
   -- | Full potentA = f (Full potentA)
   -- | Empty = Empty
   -- case potentA of 
@@ -80,6 +81,23 @@ bindOptional' :: (a -> Optional b) -> Optional a -> Optional b
 bindOptional' f (Full potentA) = f potentA
 bindOptional' _ Empty = Empty
 
+
+bindOptionalExposition :: (a -> Optional b) -> Optional a -> Optional b
+bindOptionalExposition = (\f -> \optA -> case optA of
+    Empty -> Empty
+    Full x  -> f x)
+
+-- These are all equivalent
+bindOptionalExposition' :: (a -> Optional b) -> Optional a -> Optional b
+bindOptionalExposition' f = \optA -> case optA of
+    Empty -> Empty
+    Full x  -> f x
+
+bindOptionalExpositionTwo :: (a -> Optional b) -> Optional a -> Optional b
+bindOptionalExpositionTwo f optA = case optA of
+    Empty -> Empty
+    Full x  -> f x
+    
 -- bindPartial :: (a -> Optional b) -> Optional a
 -- bindPartial f a = (Full a)
 
@@ -121,13 +139,14 @@ arrowPlusArrow _ b = b
 --
 -- >>> optional (+1) 0 Empty
 -- 0
-optional ::
-  (a -> b)
-  -> b
-  -> Optional a
-  -> b
-optional =
-  error "todo: Course.Optional#optional"
+
+-- optional' :: (a -> b) -> Optional a -> b
+-- optional' _ Empty = _
+-- optional' f (Full a) = f a  
+
+optional :: (a -> b) -> b -> Optional a -> b
+optional f x Empty = x
+optional f x (Full optY) = f optY
 
 applyOptional :: Optional (a -> b) -> Optional a -> Optional b
 applyOptional f a = bindOptional (\f' -> mapOptional f' a) f
