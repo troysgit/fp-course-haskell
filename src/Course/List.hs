@@ -32,9 +32,7 @@ import qualified Numeric as N
 -- BEGIN Helper functions and data types
 
 -- The custom list type
-data List t =
-  Nil
-  | t :. List t
+data List t = Nil | t :. List t
   deriving (Eq, Ord)
 
 -- Right-associative
@@ -60,6 +58,8 @@ foldLeft _ b Nil      = b
 foldLeft f b (h :. t) = let b' = f b h in b' `seq` foldLeft f b' t
 
 -- END Helper functions and data types
+-- List, infixr, Show, infinity, foldRight, foldLeft
+
 
 -- | Returns the head of the list or the given default.
 --
@@ -72,13 +72,9 @@ foldLeft f b (h :. t) = let b' = f b h in b' `seq` foldLeft f b' t
 -- prop> \x -> x `headOr` infinity == 0
 --
 -- prop> \x -> x `headOr` Nil == x
-headOr ::
-  a
-  -> List a
-  -> a
-headOr =
-  error "todo: Course.List#headOr"
-
+headOr :: a -> List a -> a
+headOr = 
+  foldRight const -- const always evaluates to its first argument, ignoring the second
 -- | The product of the elements of a list.
 --
 -- >>> product Nil
@@ -89,12 +85,9 @@ headOr =
 --
 -- >>> product (1 :. 2 :. 3 :. 4 :. Nil)
 -- 24
-product ::
-  List Int
+product :: List Int
   -> Int
-product =
-  error "todo: Course.List#product"
-
+product = foldLeft (*) 1 -- this works but I don't think I understand how it's taking a list as an argument
 -- | Sum the elements of the list.
 --
 -- >>> sum (1 :. 2 :. 3 :. Nil)
@@ -107,20 +100,18 @@ product =
 sum ::
   List Int
   -> Int
-sum =
-  error "todo: Course.List#sum"
-
+sum = foldRight (+) 0 -- in this instance foldLeft vs foldRight is inconsequential? Until we work with folding
+-- over a range? 
+  
 -- | Return the length of the list.
 --
 -- >>> length (1 :. 2 :. 3 :. Nil)
 -- 3
 --
 -- prop> \x -> sum (map (const 1) x) == length x
-length ::
-  List a
+length :: List a
   -> Int
-length =
-  error "todo: Course.List#length"
+length = foldRight (\_ cnt -> cnt + 1) 0
 
 -- | Map the given function on each element of the list.
 --
@@ -130,13 +121,10 @@ length =
 -- prop> \x -> headOr x (map (+1) infinity) == 1
 --
 -- prop> \x -> map id x == x
-map ::
-  (a -> b)
-  -> List a
-  -> List b
-map =
-  error "todo: Course.List#map"
-
+map :: (a -> b) -> List a -> List b
+map f = foldRight (\val xs -> f val :. xs) Nil
+    -- [f x | x <- xs] -- this no work. Syntactic sugar. 
+  
 -- | Return elements satisfying the given predicate.
 --
 -- >>> filter even (1 :. 2 :. 3 :. 4 :. 5 :. Nil)
@@ -151,8 +139,11 @@ filter ::
   (a -> Bool)
   -> List a
   -> List a
-filter =
-  error "todo: Course.List#filter"
+filter f Nil = Nil 
+-- filter f (x:.xs) = if f x == True then x :. ys else Nil
+--   where ys = () 
+
+  -- error "todo: Course.List#filter"
 
 -- | Append two lists to a new list.
 --
@@ -674,6 +665,7 @@ strconcat ::
   -> P.String
 strconcat =
   P.concatMap hlist
+
 
 stringconcat ::
   [P.String]
