@@ -33,13 +33,16 @@ import qualified Numeric as N
 
 -- The custom list type
 data List t = Nil | t :. List t
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Show)
+
+-- This is equivalent to the above
+-- data List t = Nil | Cons t (List t)
 
 -- Right-associative
 infixr 5 :.
 
-instance Show t => Show (List t) where
-  show = show . hlist
+-- instance Show t => Show (List t) where
+--   show = show . hlist
 
 -- The list of integers from zero to infinity.
 infinity ::
@@ -52,10 +55,47 @@ infinity =
 foldRight :: (a -> b -> b) -> b -> List a -> b
 foldRight _ b Nil      = b
 foldRight f b (h :. t) = f h (foldRight f b t)
+{- 
+foldRight f b (1 :. (2 :. (3 :. Nil)))
+f 1 (foldRight f b (2 :. (3 :. Nil)))
+f 1 (f 2 (foldRight f b (3 :. Nil)))
+f 1 (f 2 (f 3 (foldRight f b (Nil))))
+f 1 (f 2 (f 3 (b)))
 
+add x y = x + y
+foldRight add 0 (1 :. (2 :. (3 :. Nil)))
+add 1 (foldRight add 0 (2 :. (3 :. Nil)))
+add 1 (add 2 (foldRight add 0 (3 :. Nil)))
+add 1 (add 2 (add 3 (foldRight add 0 (Nil))))
+add 1 (add 2 (add 3 0))
+add 1 (add 2 3)
+add 1 (5)
+6
+-}
+
+-- this is essentially just for loops
 foldLeft :: (b -> a -> b) -> b -> List a -> b
 foldLeft _ b Nil      = b
 foldLeft f b (h :. t) = let b' = f b h in b' `seq` foldLeft f b' t
+
+{- some c code 
+foldleft f i xs == 
+res = i
+for x in xs {
+  res = f(res, x)
+}
+return res
+
+so if f is + and init = 0 and xs = [1,2,3]
+0
+1 
+res = 1
+3
+6
+
+init = 1, f = multiplication, xs = xs again
+
+-}
 
 -- END Helper functions and data types
 -- List, infixr, Show, infinity, foldRight, foldLeft
@@ -75,6 +115,22 @@ foldLeft f b (h :. t) = let b' = f b h in b' `seq` foldLeft f b' t
 headOr :: a -> List a -> a
 headOr = 
   foldRight const -- const always evaluates to its first argument, ignoring the second
+{-
+
+foldRight :: (a -> b -> b) -> b -> List a -> b
+foldRight _ b Nil      = b
+foldRight f b (h :. t) = f h (foldRight f b t)
+
+const x y = x
+foldRight const -10 (1 :. 2 :. 3 :. Nil)
+      x  y
+const 1 (foldRight const -10 (2 :. 3 :. Nil))
+1
+
+foldRight const -10 Nil
+-10
+
+-}
 -- | The product of the elements of a list.
 --
 -- >>> product Nil
@@ -85,6 +141,33 @@ headOr =
 --
 -- >>> product (1 :. 2 :. 3 :. 4 :. Nil)
 -- 24
+{-
+foldLeft :: (b -> a -> b) -> b -> List a -> b
+foldLeft _ b Nil      = b
+foldLeft f b (h :. t) = foldLeft f (f b h) t
+foldLeft f b (h :. t) = 
+  let b' = f b h 
+  in b' `seq` foldLeft f b' t
+
+foldLeft f b (h :. t) = 
+  in f b h `seq` foldLeft f (f b h) t
+
+-- equivalent to the let above 
+foldLeft f b (h :. t) = b' `seq` foldLeft f b' t
+  where b' = f b h 
+  
+product (1 :. 2 :. 3 :. Nil)
+foldLeft (*) 1 (1 :. 2 :. 3 :. Nil)
+foldLeft (*) ((*) 1 1) (2 :. 3 :. Nil)
+foldLeft (*) 1 (2 :. 3 :. Nil)
+foldLeft (*) ((*) 1 2) (3 :. Nil)
+foldLeft (*) 2 (3 :. Nil)
+foldLeft (*) ((*) 2 3) Nil
+foldLeft (*) 6 Nil
+6
+-}
+
+ 
 product :: List Int
   -> Int
 product = foldLeft (*) 1 -- this works but I don't think I understand how it's taking a list as an argument
@@ -96,11 +179,13 @@ product = foldLeft (*) 1 -- this works but I don't think I understand how it's t
 -- >>> sum (1 :. 2 :. 3 :. 4 :. Nil)
 -- 10
 --
+-- EVAL BY HAND
+
 -- prop> \x -> foldLeft (-) (sum x) x == 0
 sum ::
-  List Int
-  -> Int
-sum = foldRight (+) 0 -- in this instance foldLeft vs foldRight is inconsequential? Until we work with folding
+  List Integer
+  -> Integer
+sum = foldLeft (+) 0 -- in this instance foldLeft vs foldRight is inconsequential? Until we work with folding
 -- over a range? 
   
 -- | Return the length of the list.
@@ -108,6 +193,7 @@ sum = foldRight (+) 0 -- in this instance foldLeft vs foldRight is inconsequenti
 -- >>> length (1 :. 2 :. 3 :. Nil)
 -- 3
 --
+-- EVAL BY HAND
 -- prop> \x -> sum (map (const 1) x) == length x
 length :: List a
   -> Int
@@ -115,6 +201,8 @@ length = foldRight (\_ cnt -> cnt + 1) 0
 
 -- | Map the given function on each element of the list.
 --
+
+-- EVAL BY HAND
 -- >>> map (+10) (1 :. 2 :. 3 :. Nil)
 -- [11,12,13]
 --
@@ -122,7 +210,11 @@ length = foldRight (\_ cnt -> cnt + 1) 0
 --
 -- prop> \x -> map id x == x
 map :: (a -> b) -> List a -> List b
-map f = foldRight (\val xs -> f val :. xs) Nil
+map f Nil = Nil
+map f (h :. t) = f h :. map f t
+-- Next week: translate between the above and a shorter foldRight below
+-- map f = foldRight (\val xs -> f val :. xs) Nil
+
     -- [f x | x <- xs] -- this no work. Syntactic sugar. 
   
 -- | Return elements satisfying the given predicate.
@@ -135,6 +227,8 @@ map f = foldRight (\val xs -> f val :. xs) Nil
 -- prop> \x -> filter (const True) x == x
 --
 -- prop> \x -> filter (const False) x == Nil
+-- Looks a lot like map, nil and cons clause BUT the cons case is going to be more complicated (IF statement)
+--- if then else 
 filter ::
   (a -> Bool)
   -> List a
