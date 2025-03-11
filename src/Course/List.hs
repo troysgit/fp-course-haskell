@@ -210,7 +210,7 @@ length = foldRight (\_ cnt -> cnt + 1) 0
 --
 -- prop> \x -> map id x == x
 map :: (a -> b) -> List a -> List b
-map f Nil = Nil
+map _ Nil = Nil
 map f (h :. t) = f h :. map f t
 -- Next week: translate between the above and a shorter foldRight below
 -- map f = foldRight (\val xs -> f val :. xs) Nil
@@ -229,15 +229,13 @@ map f (h :. t) = f h :. map f t
 -- prop> \x -> filter (const False) x == Nil
 -- Looks a lot like map, nil and cons clause BUT the cons case is going to be more complicated (IF statement)
 --- if then else 
-filter ::
-  (a -> Bool)
+filter :: (a -> Bool) -> List a
   -> List a
-  -> List a
-filter f Nil = Nil 
+filter _ Nil = Nil
+filter f (x :. xs) = if f x then x :. filter f xs else filter f xs
+-- 
 -- filter f (x:.xs) = if f x == True then x :. ys else Nil
 --   where ys = () 
-
-  -- error "todo: Course.List#filter"
 
 -- | Append two lists to a new list.
 --
@@ -251,12 +249,13 @@ filter f Nil = Nil
 -- prop> \x -> (x ++ y) ++ z == x ++ (y ++ z)
 --
 -- prop> \x -> x ++ Nil == x
-(++) ::
-  List a
-  -> List a
-  -> List a
-(++) =
-  error "todo: Course.List#(++)"
+-- I need to think about this one some more
+(++) :: List a -> List a -> List a
+(++) Nil Nil = Nil
+(++) (xs) Nil = xs
+(++) Nil (ys) = ys
+-- (++) (x :. xs) ys = if x == Nil then ys else xs ++ ys
+(++) (x :. xs) ys = x :. (xs ++ ys)
 
 infixr 5 ++
 
@@ -270,8 +269,7 @@ infixr 5 ++
 -- prop> \x -> headOr x (flatten (y :. infinity :. Nil)) == headOr 0 y
 --
 -- prop> \x -> sum (map length x) == length (flatten x)
-flatten ::
-  List (List a)
+flatten :: List (List a)
   -> List a
 flatten =
   error "todo: Course.List#flatten"
