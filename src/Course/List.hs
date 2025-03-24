@@ -33,7 +33,7 @@ import qualified Numeric as N
 
 -- The custom list type
 data List t = Nil | t :. List t
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord)
 
 -- This is equivalent to the above
 -- data List t = Nil | Cons t (List t)
@@ -41,8 +41,8 @@ data List t = Nil | t :. List t
 -- Right-associative
 infixr 5 :.
 
--- instance Show t => Show (List t) where
---   show = show . hlist
+instance Show t => Show (List t) where
+  show = show . hlist
 
 -- The list of integers from zero to infinity.
 infinity ::
@@ -251,11 +251,12 @@ filter f (x :. xs) = if f x then x :. filter f xs else filter f xs
 -- prop> \x -> x ++ Nil == x
 -- I need to think about this one some more
 (++) :: List a -> List a -> List a
-(++) Nil Nil = Nil
-(++) (xs) Nil = xs
-(++) Nil (ys) = ys
--- (++) (x :. xs) ys = if x == Nil then ys else xs ++ ys
-(++) (x :. xs) ys = x :. (xs ++ ys)
+xs ++ ys = foldRight (:.) ys xs 
+-- (++) Nil Nil = Nil
+-- (++) (xs) Nil = xs
+-- (++) Nil (ys) = ys
+-- -- (++) (x :. xs) ys = if x == Nil then ys else xs ++ ys
+-- (++) (x :. xs) ys = x :. (xs ++ ys)
 
 infixr 5 ++
 
@@ -272,8 +273,7 @@ infixr 5 ++
 flatten :: List (List a)
   -> List a
 flatten =
-  error "todo: Course.List#flatten"
-
+  foldRight (++) Nil 
 -- | Map a function then flatten to a list.
 --
 -- >>> flatMap (\x -> x :. x + 1 :. x + 2 :. Nil) (1 :. 2 :. 3 :. Nil)
