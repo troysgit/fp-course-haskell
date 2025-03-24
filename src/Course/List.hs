@@ -288,18 +288,14 @@ flatMap ::
   (a -> List b)
   -> List a
   -> List b
-flatMap =
-  error "todo: Course.List#flatMap"
-
+flatMap f xs = foldRight (\x acc -> f x ++ acc) Nil xs
 -- | Flatten a list of lists to a list (again).
 -- HOWEVER, this time use the /flatMap/ function that you just wrote.
 --
 -- prop> \x -> let types = x :: List (List Int) in flatten x == flattenAgain x
-flattenAgain ::
-  List (List a)
+flattenAgain :: List (List a)
   -> List a
-flattenAgain =
-  error "todo: Course.List#flattenAgain"
+flattenAgain xs = flatMap id xs-- HELP 
 
 -- | Convert a list of optional values to an optional list of values.
 --
@@ -320,11 +316,17 @@ flattenAgain =
 --
 -- >>> seqOptional (Empty :. map Full infinity)
 -- Empty
-seqOptional ::
-  List (Optional a)
+seqOptional :: List (Optional a)
   -> Optional (List a)
-seqOptional =
-  error "todo: Course.List#seqOptional"
+seqOptional xxs 
+-- seqOptional (Empty:_) = Empty
+-- seqOptional (Full x:xs) = do
+--   rem <- seqOptional xs
+--   return (x:rem)
+
+  -- flattenAgain x  
+  -- seqOptional xs 
+  -- error "todo: Course.List#seqOptional"
 
 -- | Find the first element in the list matching the predicate.
 --
