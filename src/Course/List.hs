@@ -72,11 +72,51 @@ add 1 (add 2 3)
 add 1 (5)
 6
 -}
+-- STUDY THIS 
+foldLeftRight :: (b -> a -> b) -> b -> List a -> b
+foldLeftRight f b xs = foldRight (\h q -> (\m -> q (f m h))) id xs b
 
+-- foldLeftRight fun start (1 :. 2 :. Nil)
+-- foldRight (\h q -> (\m -> q (fun m h))) id (1 :. 2 :. Nil) start
+-- (\h q -> (\m -> q (fun m h))) 1 (foldRight (\h q -> (\m -> q (fun m h))) id (2 :. Nil)) start
+-- (\q -> (\m -> q (fun m 1))) (foldRight (\h q -> (\m -> q (fun m h))) id (2 :. Nil)) start
+-- (\q -> (\m -> q (fun m 1))) ((\h q -> (\m -> q (fun m h))) 2 (foldRight (\h q -> (\m -> q (fun m h))) id Nil) start
+-- (\q -> (\m -> q (fun m 1))) ((\q -> (\m -> q (fun m 2))) (foldRight (\h q -> (\m -> q (fun m h))) id Nil) start
+-- (\q -> (\m -> q (fun m 1))) ((\q -> (\m -> q (fun m 2)) id) start
+-- (\q -> (\m -> q (fun m 1))) (\m -> id (fun m 2)) start
+-- (\m -> (\p -> id (fun p 2)) (fun m 1)) start
+-- (\p -> id (fun p 2)) (fun start 1)) 
+-- id (fun (fun start 1) 2))
+-- fun (fun start 1) 2
+-- + (+ 0 1) 2 
+-- 3
+-- This is madness sparta
+-- (id . flip fun 2 . flip fun 1) start
+-- (id . fun (fun start 1) 2)
+-- id (fun (fun start 1) 2)
+
+-- continuation passing; read up on this
+
+foldLeftRight''' :: (b -> a -> b) -> b -> List a -> b
+foldLeftRight''' f b xs = foldRight (\h q -> q . flip f h) id xs b
+-- be careful with a b c types and how I think about them 
+
+flip' :: (a -> b -> c) -> b -> a -> c
+flip' f b a = f a b
+
+foldLeftRight' :: (b -> a -> b) -> b -> List a -> b
+foldLeftRight' f b xs = foldRight (\h q m -> q (f m h)) id xs b
+
+{- foldLeftRight f b Nil
+foldRight (\h q -> ) id Nil b
+id b 
+-}
 -- this is essentially just for loops
 foldLeft :: (b -> a -> b) -> b -> List a -> b
-foldLeft _ b Nil      = b
-foldLeft f b (h :. t) = let b' = f b h in b' `seq` foldLeft f b' t
+foldLeft _ b Nil      = b -- return whatever b is 
+foldLeft f b (h :. t) = foldLeft f (f b h) t
+-- foldLeft f b (h :. t) = let b' = f b h in 
+  -- b' `seq` foldLeft f b' t
 
 {- some c code 
 foldleft f i xs == 
@@ -293,9 +333,12 @@ flatMap f xs = foldRight (\x acc -> f x ++ acc) Nil xs
 -- HOWEVER, this time use the /flatMap/ function that you just wrote.
 --
 -- prop> \x -> let types = x :: List (List Int) in flatten x == flattenAgain x
-flattenAgain :: List (List a)
-  -> List a
-flattenAgain xs = flatMap id xs-- HELP 
+
+-- **** Scotty (for newbs) for Haskell Web starting point. Servant for type level pros.  
+-- ******* start with flatmap _ xs and see what the compiler tells re. type of function
+-- flattenAgain :: List (List a)
+--   -> List a
+-- flattenAgain xs = flatMap id xs-- HELP 
 
 -- | Convert a list of optional values to an optional list of values.
 --
@@ -316,9 +359,9 @@ flattenAgain xs = flatMap id xs-- HELP
 --
 -- >>> seqOptional (Empty :. map Full infinity)
 -- Empty
-seqOptional :: List (Optional a)
-  -> Optional (List a)
-seqOptional xxs 
+-- seqOptional :: List (Optional a)
+--   -> Optional (List a)
+-- seqOptional xxs 
 -- seqOptional (Empty:_) = Empty
 -- seqOptional (Full x:xs) = do
 --   rem <- seqOptional xs
