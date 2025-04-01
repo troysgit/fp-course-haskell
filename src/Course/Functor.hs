@@ -82,10 +82,13 @@ instance Functor Optional where
 -- 17
 instance Functor ((->) t) where
   (<$>) ::
-    (a -> b) -- g 
-    -> ((->) t a)
+    (a -> b)
+    -> ((->) t a) 
     -> ((->) t b)
-  (<$>) =
+  -- f <$> g = \x -> f (g x)
+  f <$> g = f . g
+   
+  -- (<$>) x = f . g x
     -- error "todo: Course.Functor (<$>)#((->) t)"
 
 -- | Anonymous map. Maps a constant value on a functor.
@@ -101,8 +104,8 @@ instance Functor ((->) t) where
   a
   -> k b
   -> k a
-(<$) =
-  error "todo: Course.Functor#(<$)"
+(<$) = (<$>) . const
+  -- error "todo: Course.Functor#(<$)"
 
 -- | Apply a value to a functor-of-functions.
 --
@@ -126,8 +129,8 @@ instance Functor ((->) t) where
   k (a -> b)
   -> a
   -> k b
-(??) ff a =
-  error "todo: Course.Functor#(??)"
+(??) ff a = (<$>) (\f -> f a) ff
+  -- error "todo: Course.Functor#(??)"
 
 infixl 1 ??
 
@@ -148,8 +151,8 @@ void ::
   Functor k =>
   k a
   -> k ()
-void =
-  error "todo: Course.Functor#void"
+void = (<$>) (const ())
+  -- error "todo: Course.Functor#void"
 
 -----------------------
 -- SUPPORT LIBRARIES --
