@@ -37,12 +37,12 @@ infixl 4 <$>
 -- >>> (+1) <$> ExactlyOne 2
 -- ExactlyOne 3
 instance Functor ExactlyOne where
-  (<$>) ::
-    (a -> b)
-    -> ExactlyOne a
-    -> ExactlyOne b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance ExactlyOne"
+  (<$>) :: 
+    (a -> b) -- f
+    -> ExactlyOne a -- x 
+    -> ExactlyOne b -- returns this  
+  (<$>) f (ExactlyOne x) = ExactlyOne (f x)
+    -- error "todo: Course.Functor (<$>)#instance ExactlyOne"
 
 -- | Maps a function on the List functor.
 --
@@ -53,11 +53,12 @@ instance Functor ExactlyOne where
 -- [2,3,4]
 instance Functor List where
   (<$>) ::
-    (a -> b)
-    -> List a
+    (a -> b) -- f
+    -> List a -- input list xs
     -> List b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance List"
+  (<$>) _ Nil = Nil
+  (<$>) f xs = map f xs
+    -- error "todo: Course.Functor (<$>)#instance List"
 
 -- | Maps a function on the Optional functor.
 --
@@ -68,11 +69,12 @@ instance Functor List where
 -- Full 3
 instance Functor Optional where
   (<$>) ::
-    (a -> b)
-    -> Optional a
+    (a -> b) -- g
+    -> Optional a -- y
     -> Optional b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance Optional"
+  (<$>) _ Empty = Empty
+  (<$>) g (Full y) = Full (g y)
+    -- error "todo: Course.Functor (<$>)#instance Optional"
 
 -- | Maps a function on the reader ((->) t) functor.
 --
@@ -80,11 +82,11 @@ instance Functor Optional where
 -- 17
 instance Functor ((->) t) where
   (<$>) ::
-    (a -> b)
+    (a -> b) -- g 
     -> ((->) t a)
     -> ((->) t b)
   (<$>) =
-    error "todo: Course.Functor (<$>)#((->) t)"
+    -- error "todo: Course.Functor (<$>)#((->) t)"
 
 -- | Anonymous map. Maps a constant value on a functor.
 --
