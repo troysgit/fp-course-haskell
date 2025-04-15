@@ -26,6 +26,17 @@ import qualified Prelude as P(fmap, pure, (>>=))
 --
 -- * The law of interchange
 --   `∀u y. u <*> pure y = pure ($ y) <*> u`
+combineMaybe :: Optional a -> Optional b -> Optional (a,b)
+combineMaybe (Full a) (Full b) = Full (a,b)
+combineMaybe _ _ = Empty 
+
+addMaybe :: Optional Int -> Optional Int -> Optional Int
+addMaybe (Full a) (Full b) = Full (a + b)
+addMaybe _ _ = Empty
+
+applyMaybe :: (a -> b -> c) -> Optional a -> Optional b -> Optional c
+applyMaybe f (Full a) (Full b) = Full (f a b)
+applyMaybe _ _ _ = Empty
 
 class Functor k => Applicative k where
   pure ::
@@ -45,17 +56,13 @@ infixl 4 <*>
 -- >>> ExactlyOne (+10) <*> ExactlyOne 8
 -- ExactlyOne 18
 instance Applicative ExactlyOne where
-  pure ::
-    a
-    -> ExactlyOne a
-  pure =
-    error "todo: Course.Applicative pure#instance ExactlyOne"
+  pure :: a -> ExactlyOne a
+  pure = ExactlyOne
+  
   (<*>) ::
-    ExactlyOne (a -> b)
-    -> ExactlyOne a
+    ExactlyOne (a -> b) -> ExactlyOne a
     -> ExactlyOne b
-  (<*>) =
-    error "todo: Course.Applicative (<*>)#instance ExactlyOne"
+  (<*>) (ExactlyOne f) (ExactlyOne a) = ExactlyOne (f a)
 
 -- | Insert into a List.
 --
@@ -64,17 +71,27 @@ instance Applicative ExactlyOne where
 -- >>> (+1) :. (*2) :. Nil <*> 1 :. 2 :. 3 :. Nil
 -- [2,3,4,2,4,6]
 instance Applicative List where
-  pure ::
-    a
+  pure :: a
     -> List a
-  pure =
-    error "todo: Course.Applicative pure#instance List"
+  pure a = a :. Nil
+
   (<*>) ::
     List (a -> b)
     -> List a
     -> List b
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance List"
+  (<*>) Nil _ = Nil
+  (<*>) (f :. fs) as = map f as ++ (fs <*> as) 
+
+-- >>> ((+1) :. (*2) :. Nil) <*> (1 :. 2 :. 3 :. Nil)
+{-
+map (+1) (1 :. 2 :. 3 :. Nil) ++ ((*2) :. Nil <*> (1 :. 2 :. 3 :. Nil))
+(2 :. 3 :. 4 :. Nil) ++ ((*2) :. Nil <*> (1 :. 2 :. 3 :. Nil))
+(2 :. 3 :. 4 :. Nil) ++ map ((*2) (1 :. 2 :. 3 :. Nil)) ++ Nil <*> (1 :. 2 :. 3 :. Nil)
+(2 :. 3 :. 4 :. Nil) ++ (2 :. 4 :. 6 :. Nil) ++ Nil <*> (1 :. 2 :. 3 :. Nil)
+(2 :. 3 :. 4 :. Nil) ++ (2 :. 4 :. 6 :. Nil) ++ Nil 
+-} 
+  -- (<*>) (f :. Nil) (a :. Nil) = (f a) :. Nil
+  
 
 -- | Insert into an Optional.
 --
@@ -89,17 +106,15 @@ instance Applicative List where
 -- >>> Full (+8) <*> Empty
 -- Empty
 instance Applicative Optional where
-  pure ::
-    a
+  pure :: a
     -> Optional a
-  pure =
-    error "todo: Course.Applicative pure#instance Optional"
-  (<*>) ::
-    Optional (a -> b)
-    -> Optional a
+  pure = Full
+  
+  (<*>) :: Optional (a -> b) -> Optional a
     -> Optional b
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance Optional"
+  (<*>) (Full f) (Full a) = Full (f a)
+  (<*>) _ _ = Empty 
+  -- (<*>) _ Empty = Empty 
 
 -- | Insert into a constant function.
 --
@@ -120,19 +135,17 @@ instance Applicative Optional where
 --
 -- prop> \x y -> pure x y == x
 instance Applicative ((->) t) where
-  pure ::
-    a
-    -> ((->) t a)
-  pure =
-    error "todo: Course.Applicative pure#((->) t)"
-  (<*>) ::
-    ((->) t (a -> b))
-    -> ((->) t a)
-    -> ((->) t b)
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance ((->) t)"
+  pure :: a -> (t -> a)
+  pure = const 
+  -- pure a = \x -> a
 
-
+  (<*>) :: (t -> (a -> b)) -> (t -> a) -> t -> b
+  (<*>) f g t = f t (g t) -- readr applicative
+  -- SKI calculus for leisure reading
+-- i = \x -> x -- i == s k k -- an exercise for the readers enjoyment, prove this
+-- k = \a b -> a
+-- s = \f g t -> f t (g t)
+    
 -- | Apply a binary function in the environment.
 --
 -- >>> lift2 (+) (ExactlyOne 7) (ExactlyOne 8)
@@ -152,6 +165,9 @@ instance Applicative ((->) t) where
 --
 -- >>> lift2 (+) length sum (listh [4,5,6])
 -- 18
+
+-- Try to do this using functions solely from the applicative class -- 
+-- after getting lift2, if you get lift3 you'll start to see a pattern
 lift2 ::
   Applicative k =>
   (a -> b -> c)
