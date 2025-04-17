@@ -165,17 +165,19 @@ instance Applicative ((->) t) where
 --
 -- >>> lift2 (+) length sum (listh [4,5,6])
 -- 18
+-- applyMaybe has a function from a -> b -> c 
+-- applyMaybe :: (a -> b -> c) -> Optional a -> Optional b -> Optional c
+-- applyMaybe f (Full a) (Full b) = Full (f a b)
+-- applyMaybe _ _ _ = Empty
 
 -- Try to do this using functions solely from the applicative class -- 
 -- after getting lift2, if you get lift3 you'll start to see a pattern
+-- all functions in applicative class are: ExactlyOne, List, Optional, ((->) t)
 lift2 ::
-  Applicative k =>
-  (a -> b -> c)
-  -> k a
-  -> k b
+  Applicative k => (a -> b -> c) -> k a -> k b
   -> k c
-lift2 =
-  error "todo: Course.Applicative#lift2"
+lift2 f a b = pure f <*> a <*> b 
+  -- error "todo: Course.Applicative#lift2"
 
 -- | Apply a ternary function in the environment.
 -- /can be written using `lift2` and `(<*>)`./
