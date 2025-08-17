@@ -73,8 +73,12 @@ add 1 (5)
 6
 -}
 -- STUDY THIS 
-foldLeftRight :: (b -> a -> b) -> b -> List a -> b
-foldLeftRight f b xs = foldRight (\h q -> (\m -> q (f m h))) id xs b
+foldLeft :: (b -> a -> b) -> b -> List a -> b
+foldLeft _ b Nil      = b
+foldLeft f b (h :. t) = let b' = f b h in b' `seq` foldLeft f b' t
+
+-- foldLeftRight :: (b -> a -> b) -> b -> List a -> b
+-- foldLeftRight f b xs = foldRight (\h q -> (\m -> q (f m h))) id xs b
 
 -- foldLeftRight fun start (1 :. 2 :. Nil)
 -- foldRight (\h q -> (\m -> q (fun m h))) id (1 :. 2 :. Nil) start
@@ -112,9 +116,9 @@ foldRight (\h q -> ) id Nil b
 id b 
 -}
 -- this is essentially just for loops
-foldLeft :: (b -> a -> b) -> b -> List a -> b
-foldLeft _ b Nil      = b -- return whatever b is 
-foldLeft f b (h :. t) = foldLeft f (f b h) t
+-- foldLeft :: (b -> a -> b) -> b -> List a -> b
+-- foldLeft _ b Nil      = b -- return whatever b is 
+-- foldLeft f b (h :. t) = foldLeft f (f b h) t
 -- foldLeft f b (h :. t) = let b' = f b h in 
   -- b' `seq` foldLeft f b' t
 
@@ -391,8 +395,10 @@ find ::
   (a -> Bool)
   -> List a
   -> Optional a
-find =
-  error "todo: Course.List#find"
+find f (x :. xs) = if f x then Full x else find f xs
+find _ Nil = Empty
+
+  -- error "todo: Course.List#find"
 
 -- | Determine if the length of the given list is greater than 4.
 --
@@ -410,8 +416,11 @@ find =
 lengthGT4 ::
   List a
   -> Bool
-lengthGT4 =
-  error "todo: Course.List#lengthGT4"
+-- lengthGT4 xs = if find (\x acc -> acc+1) > 4 then True else 
+lengthGT4 xs = foldRight (\_ acc -> acc + 1) 0 xs > 4 
+-- lengthGT4 infinity = True
+
+  -- error "todo: Course.List#lengthGT4"
 
 -- | Reverse a list.
 --
@@ -427,8 +436,9 @@ lengthGT4 =
 reverse ::
   List a
   -> List a
-reverse =
-  error "todo: Course.List#reverse"
+reverse = 
+  foldLeft (flip (:.)) Nil
+ -- error "todo: Course.List#reverse"
 
 -- | Produce an infinite `List` that seeds with the given value at its head,
 -- then runs the given function for subsequent elements
@@ -442,8 +452,8 @@ produce ::
   (a -> a)
   -> a
   -> List a
-produce f x =
-  error "todo: Course.List#produce"
+produce f x = x :. produce f (f x)
+  -- error "todo: Course.List#produce"
 
 -- | Do anything other than reverse a list.
 -- Is it even possible?
@@ -457,8 +467,8 @@ produce f x =
 notReverse ::
   List a
   -> List a
-notReverse =
-  error "todo: Is it even possible?"
+notReverse = id 
+  -- error "todo: Is it even possible?"
 
 ---- End of list exercises
 
