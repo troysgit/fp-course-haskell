@@ -340,9 +340,9 @@ flatMap f xs = foldRight (\x acc -> f x ++ acc) Nil xs
 
 -- **** Scotty (for newbs) for Haskell Web starting point. Servant for type level pros.  
 -- ******* start with flatmap _ xs and see what the compiler tells re. type of function
--- flattenAgain :: List (List a)
---   -> List a
--- flattenAgain xs = flatMap id xs-- HELP 
+flattenAgain :: List (List a)
+  -> List a
+flattenAgain xs = flatMap id xs-- HELP 
 
 -- | Convert a list of optional values to an optional list of values.
 --
@@ -363,13 +363,15 @@ flatMap f xs = foldRight (\x acc -> f x ++ acc) Nil xs
 --
 -- >>> seqOptional (Empty :. map Full infinity)
 -- Empty
--- seqOptional :: List (Optional a)
---   -> Optional (List a)
--- seqOptional xxs 
--- seqOptional (Empty:_) = Empty
--- seqOptional (Full x:xs) = do
---   rem <- seqOptional xs
---   return (x:rem)
+seqOptional :: List (Optional a) -> Optional (List a)
+seqOptional Nil = Full Nil
+seqOptional (x :. xs) = case x of
+  Empty -> Empty
+  Full a -> case seqOptional xs of
+              Empty -> Empty
+              Full as -> Full (a :. as)
+-- seqOptional (Full x : xs) = x :. seqOptional (xs)   
+-- seqOptional (Empty:_) = Empty  
 
   -- flattenAgain x  
   -- seqOptional xs 

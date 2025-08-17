@@ -38,6 +38,10 @@ applyMaybe :: (a -> b -> c) -> Optional a -> Optional b -> Optional c
 applyMaybe f (Full a) (Full b) = Full (f a b)
 applyMaybe _ _ _ = Empty
 
+seqOptional' :: List (Optional a) -> Optional (List a)
+seqOptional' Nil = Full Nil
+seqOptional' (x :. xs) = applyMaybe (:.) x (seqOptional' xs)
+
 class Functor k => Applicative k where
   pure ::
     a -> k a
@@ -75,10 +79,7 @@ instance Applicative List where
     -> List a
   pure a = a :. Nil
 
-  (<*>) ::
-    List (a -> b)
-    -> List a
-    -> List b
+  (<*>) :: List (a -> b) -> List a -> List b
   (<*>) Nil _ = Nil
   (<*>) (f :. fs) as = map f as ++ (fs <*> as) 
 
@@ -110,8 +111,7 @@ instance Applicative Optional where
     -> Optional a
   pure = Full
   
-  (<*>) :: Optional (a -> b) -> Optional a
-    -> Optional b
+  (<*>) :: Optional (a -> b) -> Optional a -> Optional b
   (<*>) (Full f) (Full a) = Full (f a)
   (<*>) _ _ = Empty 
   -- (<*>) _ Empty = Empty 
@@ -136,12 +136,13 @@ instance Applicative Optional where
 -- prop> \x y -> pure x y == x
 instance Applicative ((->) t) where
   pure :: a -> (t -> a)
-  pure = const 
-  -- pure a = \x -> a
+  -- pure = const 
+  pure a = \t -> a
 
-  (<*>) :: (t -> (a -> b)) -> (t -> a) -> t -> b
-  (<*>) f g t = f t (g t) -- readr applicative
-  -- SKI calculus for leisure reading
+  (<*>) :: (t -> (a -> b)) -> (t -> a) -> (t -> b)
+  (<*>) f g = \t -> (f t) (g t) -- S combinator 
+-- (<*>) f g t = f t (g t) -- readr applicative
+    -- SKI calculus for leisure reading
 -- i = \x -> x -- i == s k k -- an exercise for the readers enjoyment, prove this
 -- k = \a b -> a
 -- s = \f g t -> f t (g t)
@@ -174,8 +175,7 @@ instance Applicative ((->) t) where
 -- after getting lift2, if you get lift3 you'll start to see a pattern
 -- all functions in applicative class are: ExactlyOne, List, Optional, ((->) t)
 lift2 ::
-  Applicative k => (a -> b -> c) -> k a -> k b
-  -> k c
+  Applicative k => (a -> b -> c) -> k a -> k b -> k c
 lift2 f a b = pure f <*> a <*> b 
   -- error "todo: Course.Applicative#lift2"
 
@@ -209,8 +209,13 @@ lift3 ::
   -> k b
   -> k c
   -> k d
-lift3 =
-  error "todo: Course.Applicative#lift3"
+lift3 f a b c = f <$> a <*> b <*> c 
+lift3 f a b c = lift2 f a b <*> c
+
+-- long version
+
+-- short version 
+  -- error "todo: Course.Applicative#lift3"
 
 -- | Apply a quaternary function in the environment.
 -- /can be written using `lift3` and `(<*>)`./
